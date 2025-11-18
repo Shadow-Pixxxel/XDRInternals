@@ -95,7 +95,7 @@
         [string]$SortDirection = 'Asc',
 
         [Parameter()]
-        [ValidateRange(1, 1000)]
+        [ValidateRange(1, 500)]
         [int]$PageSize = 20,
 
         [Parameter()]
@@ -167,7 +167,7 @@
                 if ($_ -eq 'EntraID') { 'AzureActiveDirectory' } else { $_ }
             }
             $body.Filters['IdentityProviders'] = @{
-                has = $translatedIdentityProvider
+                has = @($translatedIdentityProvider)
             }
         }
 
@@ -179,7 +179,7 @@
                 if ($_ -eq 'EntraID') { 'AzureActiveDirectory' } else { $_ }
             }
             $body.Filters['PrimaryIdentityProvider'] = @{
-                eq = $translatedIdentityEnvironment
+                eq = @($translatedIdentityEnvironment)
             }
         }
 
