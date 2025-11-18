@@ -33,6 +33,10 @@
         Filters identities by primary identity provider. Valid values are "ActiveDirectory", "EntraID", and "Hybrid".
         Multiple values can be specified.
 
+    .PARAMETER All
+        Retrieves all identities by automatically paging through all results.
+        When specified, PageSize and Skip parameters are ignored.
+
     .PARAMETER Force
         Bypasses the cache and forces a fresh retrieval from the API.
 
@@ -80,11 +84,21 @@
         Get-XdrIdentityIdentity -Force
         Forces a fresh retrieval of identities, bypassing the cache.
 
+    .EXAMPLE
+        Get-XdrIdentityIdentity -All
+        Retrieves all identities by automatically paging through all results.
+
+    .EXAMPLE
+        Get-XdrIdentityIdentity -All -SearchText "admin"
+        Retrieves all identities matching "admin" by paging through all results.
+
     .OUTPUTS
         Object
         Returns the identities data from the API.
     #>
-    [CmdletBinding()]
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseOutputTypeCorrectly', '')]
+    [CmdletBinding(DefaultParameterSetName = 'Paged')]
+    [OutputType([Object])]
     param (
         [Parameter()]
         [ValidateSet('RepresentableName', 'AccountDomain', 'CreatedDateTime')]
@@ -94,11 +108,11 @@
         [ValidateSet('Asc', 'Dsc')]
         [string]$SortDirection = 'Asc',
 
-        [Parameter()]
-        [ValidateRange(1, 1000)]
+        [Parameter(ParameterSetName = 'Paged')]
+        [ValidateRange(1, 500)]
         [int]$PageSize = 20,
 
-        [Parameter()]
+        [Parameter(ParameterSetName = 'Paged')]
         [int]$Skip = 0,
 
         [Parameter()]
@@ -113,6 +127,9 @@
         [ValidateSet('ActiveDirectory', 'EntraID', 'Hybrid')]
         [string[]]$IdentityEnvironment,
 
+        [Parameter(ParameterSetName = 'All', Mandatory)]
+        [switch]$All,
+
         [Parameter()]
         [switch]$Force
     )
@@ -122,6 +139,127 @@
     }
 
     process {
+        # Build filters first as they're needed for caching and API calls
+        $filters = @{}
+
+        # Add IdentityProvider filter if specified
+        if ($PSBoundParameters.ContainsKey('IdentityProvider')) {
+            Write-Verbose "Filtering by IdentityProvider: $($IdentityProvider -join ', ')"
+            # Translate EntraID to AzureActiveDirectory for API
+            $translatedIdentityProvider = $IdentityProvider | ForEach-Object {
+                if ($_ -eq 'EntraID') { 'AzureActiveDirectory' } else { $_ }
+            }
+            $filters['IdentityProviders'] = @{
+                has = @($translatedIdentityProvider)
+            }
+        }
+
+        # Add IdentityEnvironment filter if specified
+        if ($PSBoundParameters.ContainsKey('IdentityEnvironment')) {
+            Write-Verbose "Filtering by IdentityEnvironment: $($IdentityEnvironment -join ', ')"
+            # Translate EntraID to AzureActiveDirectory for API
+            $translatedIdentityEnvironment = $IdentityEnvironment | ForEach-Object {
+                if ($_ -eq 'EntraID') { 'AzureActiveDirectory' } else { $_ }
+            }
+            $filters['PrimaryIdentityProvider'] = @{
+                eq = @($translatedIdentityEnvironment)
+            }
+        }
+
+        # If All switch is specified, retrieve all identities through pagination
+        if ($All) {
+            Write-Verbose "Retrieving all identities with pagination"
+
+            # Create cache key for All parameter
+            $identityProviderKey = if ($PSBoundParameters.ContainsKey('IdentityProvider')) {
+                ($IdentityProvider | Sort-Object) -join '-'
+            } else {
+                'All'
+            }
+            $primaryIdentityProviderKey = if ($PSBoundParameters.ContainsKey('IdentityEnvironment')) {
+                ($IdentityEnvironment | Sort-Object) -join '-'
+            } else {
+                'All'
+            }
+            $cacheKeySuffix = "All-$SortByField-$SortDirection-$SearchText-$identityProviderKey-$primaryIdentityProviderKey"
+            $cacheKey = "XdrIdentityIdentity-$cacheKeySuffix"
+
+            # Check cache first
+            $currentCacheValue = Get-XdrCache -CacheKey $cacheKey -ErrorAction SilentlyContinue
+            if (-not $Force -and $currentCacheValue.NotValidAfter -gt (Get-Date)) {
+                Write-Verbose "Using cached XDR identities (All)"
+                return $currentCacheValue.Value
+            } elseif ($Force) {
+                Write-Verbose "Force parameter specified, bypassing cache"
+                Clear-XdrCache -CacheKey $cacheKey
+            } else {
+                Write-Verbose "XDR identities cache (All) is missing or expired"
+            }
+
+            # Get the total count
+            $totalCount = Get-XdrIdentityIdentityCount -Filters $filters -SearchText $SearchText
+            Write-Verbose "Total identities to retrieve: $totalCount"
+
+            if ($totalCount -eq 0) {
+                Write-Verbose "No identities found matching the criteria"
+                $emptyResult = @()
+                Set-XdrCache -CacheKey $cacheKey -Value $emptyResult -TTLMinutes 5
+                return $emptyResult
+            }
+
+            # Use maximum page size for efficiency
+            $pageSizeForAll = 500
+            $allResults = [System.Collections.Generic.List[object]]::new()
+            $currentSkip = 0
+
+            while ($currentSkip -lt $totalCount) {
+                Write-Verbose "Retrieving page: Skip=$currentSkip, PageSize=$pageSizeForAll"
+
+                # Build the request body for this page
+                $body = @{
+                    PageSize   = $pageSizeForAll
+                    Skip       = $currentSkip
+                    SortBy     = @{
+                        Field     = $SortByField
+                        Direction = $SortDirection
+                    }
+                    Filters    = $filters
+                    SearchText = $SearchText
+                }
+
+                $Uri = "https://security.microsoft.com/apiproxy/mdi/identity/userapiservice/identities"
+                $result = Invoke-RestMethod -Uri $Uri -Method Post -ContentType "application/json" -Body ($body | ConvertTo-Json -Depth 10) -WebSession $script:session -Headers $script:headers
+                $pageData = $result | Select-Object -ExpandProperty data
+
+                if ($null -ne $pageData -and $pageData.Count -gt 0) {
+                    $allResults.AddRange([array]$pageData)
+                    Write-Verbose "Retrieved $($pageData.Count) identities (Total so far: $($allResults.Count))"
+                }
+
+                $currentSkip += $pageSizeForAll
+
+                # Safety check to prevent infinite loops
+                if ($pageData.Count -eq 0) {
+                    Write-Verbose "No more data returned, stopping pagination"
+                    break
+                }
+            }
+
+            Write-Verbose "Completed retrieving all identities: $($allResults.Count) total"
+
+            # Add type name for custom formatting
+            foreach ($item in $allResults) {
+                $item.PSObject.TypeNames.Insert(0, 'XdrIdentityIdentity')
+            }
+
+            # Cache the complete result
+            $finalResult = $allResults.ToArray()
+            Set-XdrCache -CacheKey $cacheKey -Value $finalResult -TTLMinutes 30
+
+            return $finalResult
+        }
+
+        # Standard single-page retrieval with caching
         # Create cache key based on parameters
         $identityProviderKey = if ($PSBoundParameters.ContainsKey('IdentityProvider')) {
             ($IdentityProvider | Sort-Object) -join '-'
@@ -155,32 +293,8 @@
                 Field     = $SortByField
                 Direction = $SortDirection
             }
-            Filters    = @{}
+            Filters    = $filters
             SearchText = $SearchText
-        }
-
-        # Add IdentityProvider filter if specified
-        if ($PSBoundParameters.ContainsKey('IdentityProvider')) {
-            Write-Verbose "Filtering by IdentityProvider: $($IdentityProvider -join ', ')"
-            # Translate EntraID to AzureActiveDirectory for API
-            $translatedIdentityProvider = $IdentityProvider | ForEach-Object {
-                if ($_ -eq 'EntraID') { 'AzureActiveDirectory' } else { $_ }
-            }
-            $body.Filters['IdentityProviders'] = @{
-                has = $translatedIdentityProvider
-            }
-        }
-
-        # Add IdentityEnvironment filter if specified
-        if ($PSBoundParameters.ContainsKey('IdentityEnvironment')) {
-            Write-Verbose "Filtering by IdentityEnvironment: $($IdentityEnvironment -join ', ')"
-            # Translate EntraID to AzureActiveDirectory for API
-            $translatedIdentityEnvironment = $IdentityEnvironment | ForEach-Object {
-                if ($_ -eq 'EntraID') { 'AzureActiveDirectory' } else { $_ }
-            }
-            $body.Filters['PrimaryIdentityProvider'] = @{
-                eq = $translatedIdentityEnvironment
-            }
         }
 
         $Uri = "https://security.microsoft.com/apiproxy/mdi/identity/userapiservice/identities"

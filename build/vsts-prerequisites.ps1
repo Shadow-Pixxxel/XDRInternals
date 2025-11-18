@@ -3,6 +3,13 @@
     $Repository = 'PSGallery'
 )
 
+# Skip if running in GitHub Actions to avoid conflicts
+if ($env:GITHUB_ACTIONS -eq 'true') {
+    Write-Host "Skipping prerequisite installation in GitHub Actions environment." -ForegroundColor Yellow
+    return
+}
+
+# List of required modules
 $modules = @("Pester", "PSScriptAnalyzer")
 
 # Automatically add missing dependencies
