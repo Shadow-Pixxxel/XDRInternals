@@ -96,7 +96,7 @@
         Object
         Returns the identities data from the API.
     #>
-    [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseOutputTypeCorrectly', '',)]
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseOutputTypeCorrectly', '')]
     [CmdletBinding(DefaultParameterSetName = 'Paged')]
     [OutputType([Object])]
     param (
@@ -169,7 +169,7 @@
         # If All switch is specified, retrieve all identities through pagination
         if ($All) {
             Write-Verbose "Retrieving all identities with pagination"
-            
+
             # Create cache key for All parameter
             $identityProviderKey = if ($PSBoundParameters.ContainsKey('IdentityProvider')) {
                 ($IdentityProvider | Sort-Object) -join '-'
@@ -195,26 +195,26 @@
             } else {
                 Write-Verbose "XDR identities cache (All) is missing or expired"
             }
-            
+
             # Get the total count
             $totalCount = Get-XdrIdentityIdentityCount -Filters $filters -SearchText $SearchText
             Write-Verbose "Total identities to retrieve: $totalCount"
-            
+
             if ($totalCount -eq 0) {
                 Write-Verbose "No identities found matching the criteria"
                 $emptyResult = @()
                 Set-XdrCache -CacheKey $cacheKey -Value $emptyResult -TTLMinutes 5
                 return $emptyResult
             }
-            
+
             # Use maximum page size for efficiency
             $pageSizeForAll = 500
             $allResults = [System.Collections.Generic.List[object]]::new()
             $currentSkip = 0
-            
+
             while ($currentSkip -lt $totalCount) {
                 Write-Verbose "Retrieving page: Skip=$currentSkip, PageSize=$pageSizeForAll"
-                
+
                 # Build the request body for this page
                 $body = @{
                     PageSize   = $pageSizeForAll
@@ -226,39 +226,39 @@
                     Filters    = $filters
                     SearchText = $SearchText
                 }
-                
+
                 $Uri = "https://security.microsoft.com/apiproxy/mdi/identity/userapiservice/identities"
                 $result = Invoke-RestMethod -Uri $Uri -Method Post -ContentType "application/json" -Body ($body | ConvertTo-Json -Depth 10) -WebSession $script:session -Headers $script:headers
                 $pageData = $result | Select-Object -ExpandProperty data
-                
+
                 if ($null -ne $pageData -and $pageData.Count -gt 0) {
                     $allResults.AddRange([array]$pageData)
                     Write-Verbose "Retrieved $($pageData.Count) identities (Total so far: $($allResults.Count))"
                 }
-                
+
                 $currentSkip += $pageSizeForAll
-                
+
                 # Safety check to prevent infinite loops
                 if ($pageData.Count -eq 0) {
                     Write-Verbose "No more data returned, stopping pagination"
                     break
                 }
             }
-            
+
             Write-Verbose "Completed retrieving all identities: $($allResults.Count) total"
-            
+
             # Add type name for custom formatting
             foreach ($item in $allResults) {
                 $item.PSObject.TypeNames.Insert(0, 'XdrIdentityIdentity')
             }
-            
+
             # Cache the complete result
             $finalResult = $allResults.ToArray()
             Set-XdrCache -CacheKey $cacheKey -Value $finalResult -TTLMinutes 30
-            
+
             return $finalResult
         }
-        
+
         # Standard single-page retrieval with caching
         # Create cache key based on parameters
         $identityProviderKey = if ($PSBoundParameters.ContainsKey('IdentityProvider')) {
