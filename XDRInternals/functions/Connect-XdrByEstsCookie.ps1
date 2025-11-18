@@ -61,38 +61,21 @@
     Write-Verbose "Initiating authentication flow to $SecurityPortalUri"
     $SecurityPortal = Invoke-WebRequest -UseBasicParsing -ErrorAction SilentlyContinue -WebSession $session -Method Get -Uri $SecurityPortalUri -Verbose:$false
 
-    # Errorhandling for special cases
+    # Error handling for missing for edge cases
     if ( $SecurityPortal.InputFields.name -notcontains "code" ) {
         try {
             $SecurityPortal.Content -match '{(.*)}' | Out-Null
-            $SessionInformation = $Matches[0] | ConvertFrom-Json
-            $Sessionid = $SessionInformation.arrSessions.id
-            $UrlLogin = $SessionInformation.urlLogin
-            $NextUri = $UrlLogin + '&sessionid=' + $Sessionid
-            Write-Verbose "Additional authentication step detected, performing secondary request to $NextUri"
-            $SecurityPortal = Invoke-WebRequest -UseBasicParsing -ErrorAction SilentlyContinue -WebSession $session -Method Get -Uri $NextUri -Verbose:$false
+            $SessionInformation_SecurityPortal = $Matches[0] | ConvertFrom-Json
         } catch {
             throw "Failed to complete authentication flow. Please verify the ESTSAUTHPERSISTENT cookie value."
         }
-    }
-
-    # Extract urlResume and required fields from the response
-    if ( $SecurityPortal.InputFields.name -notcontains "code" ) {
-        $SecurityPortal.Content -match '{(.*)}' | Out-Null
-        $SessionInformation = $Matches[0] | ConvertFrom-Json
-        $Sessionid = $SessionInformation.arrSessions.id
-        $ResumeUrl = $SessionInformation.urlResume + '&sessionid=' + $Sessionid
-        Write-Verbose "Resuming authentication flow at $ResumeUrl"
-        $SecurityPortal = Invoke-WebRequest -UseBasicParsing -ErrorAction SilentlyContinue -WebSession $session -Method Get -Uri $ResumeUrl -Verbose:$false
-    }
-
-    # If still no code field, extract error message and throw error
-    if ( $SecurityPortal.InputFields.name -notcontains "code" ) {
-        $SecurityPortal.Content -match '{(.*)}' | Out-Null
-        $SessionInformation = $Matches[0] | ConvertFrom-Json
-        $ErrorDescription = $SessionInformation.desktopSsoConfig.redirectDssoErrorPostParams.error_description
-        Write-Verbose "$($SessionInformation | ConvertTo-Json -Depth 5)"
-        throw "Failed to complete authentication flow. Please verify the ESTSAUTHPERSISTENT cookie value. Error description: $ErrorDescription"
+        if ($SessionInformation_SecurityPortal.sErrorCode -eq "50058") {
+            throw "Session information is not sufficient for single-sign-on. Please use a incognito/private browsing session to obtain a new ESTSAUTHPERSISTENT cookie value."
+        } elseif ($SessionInformation_SecurityPortal.sErrorCode) {
+            throw "Authentication flow failed with error code: $($SessionInformation_SecurityPortal.sErrorCode). Please verify the ESTSAUTHPERSISTENT cookie value."
+        } else {
+            throw "Authentication flow failed. Please verify the ESTSAUTHPERSISTENT cookie value."
+        }
     }
 
     $requiredFields = @("code", "id_token", "state", "session_state", "correlation_id")
