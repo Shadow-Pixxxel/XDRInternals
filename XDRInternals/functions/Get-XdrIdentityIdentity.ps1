@@ -97,6 +97,7 @@
         Returns the identities data from the API.
     #>
     [CmdletBinding(DefaultParameterSetName = 'Paged')]
+    [OutputType([Object])]
     param (
         [Parameter()]
         [ValidateSet('RepresentableName', 'AccountDomain', 'CreatedDateTime')]
