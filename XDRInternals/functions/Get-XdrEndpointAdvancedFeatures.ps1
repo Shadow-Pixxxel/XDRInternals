@@ -36,7 +36,14 @@
         $BasicAdvancedFeatures = Get-XdrEndpointConfigurationAdvancedFeatures
         if ( $BasicAdvancedFeatures.LicenseEnabled ) {
             $IntuneConnection = Get-XdrEndpointConfigurationIntuneConnection
-        } else {
+            if ($IntuneConnection = 1) { 
+                $IntuneConnection = @{ IntuneConnectionStatus = $true } 
+            }
+            else { 
+                $IntuneConnection = @{ IntuneConnectionStatus = $false }
+            }
+        }
+        else {
             $IntuneConnection = @{ IntuneConnectionStatus = "Unlicensed" }
         }
         $LiveResponse = Get-XdrEndpointConfigurationLiveResponse
