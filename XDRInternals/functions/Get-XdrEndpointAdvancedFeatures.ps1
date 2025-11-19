@@ -36,10 +36,10 @@
         $BasicAdvancedFeatures = Get-XdrEndpointConfigurationAdvancedFeatures
         if ( $BasicAdvancedFeatures.LicenseEnabled ) {
             $IntuneConnection = Get-XdrEndpointConfigurationIntuneConnection
-            if ($IntuneConnection = 1) { 
-                $IntuneConnection = @{ IntuneConnectionStatus = $true } 
+            if ($IntuneConnection -eq 1) {
+                $IntuneConnection = @{ IntuneConnectionStatus = $true }
             }
-            else { 
+            else {
                 $IntuneConnection = @{ IntuneConnectionStatus = $false }
             }
         }
