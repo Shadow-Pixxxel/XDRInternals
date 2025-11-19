@@ -102,6 +102,7 @@
         "Get-XdrUnifiedPortalIsOnboarded",
         "Get-XdrUnifiedPortalOnboardedWorkspace",
         "Get-XdrConfigurationUnifiedRBACWorkload",
+        "Invoke-XdrHuntingQueryValidation",
         "Invoke-XdrRestMethod",
         "Set-XdrConnectionSettings",
         "Set-XdrEndpointAdvancedFeatures",
