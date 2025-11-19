@@ -1,4 +1,4 @@
-function Get-XdrEndpointConfigurationAuthenticatedTelemetry {
+﻿function Get-XdrEndpointConfigurationAuthenticatedTelemetry {
     <#
     .SYNOPSIS
         Retrieves the Authenticated Telemetry status for Microsoft Defender for Endpoint.
