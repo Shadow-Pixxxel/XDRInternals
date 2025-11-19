@@ -76,6 +76,7 @@
         "Get-XdrDatalakeTableSchema",
         "Get-XdrEndpointAdvancedFeatures",
         "Get-XdrEndpointConfigurationAdvancedFeatures",
+        "Get-XdrEndpointConfigurationAuthenticatedTelemetry",
         "Get-XdrEndpointConfigurationIntuneConnection",
         "Get-XdrEndpointConfigurationLiveResponse",
         "Get-XdrEndpointConfigurationPotentiallyUnwantedApplications",

@@ -36,13 +36,21 @@
         $BasicAdvancedFeatures = Get-XdrEndpointConfigurationAdvancedFeatures
         if ( $BasicAdvancedFeatures.LicenseEnabled ) {
             $IntuneConnection = Get-XdrEndpointConfigurationIntuneConnection
-        } else {
+            if ($IntuneConnection -eq 1) {
+                $IntuneConnection = @{ IntuneConnectionStatus = $true }
+            }
+            else {
+                $IntuneConnection = @{ IntuneConnectionStatus = $false }
+            }
+        }
+        else {
             $IntuneConnection = @{ IntuneConnectionStatus = "Unlicensed" }
         }
         $LiveResponse = Get-XdrEndpointConfigurationLiveResponse
         $PotentiallyUnwantedApplications = Get-XdrEndpointConfigurationPotentiallyUnwantedApplications
         $PreviewFeatures = Get-XdrEndpointConfigurationPreviewFeature
         $PurviewSharing = Get-XdrEndpointConfigurationPurviewSharing
+        $AuthenticatedTelemetry = Get-XdrEndpointConfigurationAuthenticatedTelemetry
         # Overwrite specific properties with more detailed configurations
         if (-not $BasicAdvancedFeatures.AatpWorkspaceExists) {
             $BasicAdvancedFeatures.AatpIntegrationEnabled = "Feature has not been fully enabled in tenant"
@@ -217,6 +225,11 @@
                 Name        = "EnableAutomaticAttackDisruption"
                 Value       = $PotentiallyUnwantedApplications.IsAutomatedIrContainDeviceEnabled
                 Description = "Microsoft Defender XDR correlates millions of individual signals to identify active ransomware campaigns or other sophisticated attacks in the environment with high confidence. While an attack is in progress, Defender XDR disrupts the attack by automatically containing compromised assets that the attacker is using through automatic attack disruption."
+            }
+            [PSCustomObject]@{
+                Name        = "AuthenticatedTelemetry"
+                Value       = $AuthenticatedTelemetry
+                Description = "Keep authenticated telemetry turned on to prevent spoofing telemetry into your dashboard."
             }
         )
         # Remove unlicensed features
