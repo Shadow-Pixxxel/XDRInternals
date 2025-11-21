@@ -57,6 +57,7 @@ Get-XdrTenantContext -Force
 | Get-XdrEndpointAdvancedFeatures                             | Get endpoint advanced features settings                       |
 | Get-XdrEndpointConfigurationAdvancedFeatures                | Retrieve endpoint advanced features configuration             |
 | Get-XdrEndpointConfigurationAuthenticatedTelemetry          | Get authenticated telemetry configuration                     |
+| Get-XdrEndpointConfigurationCustomCollectionRule            | Get custom collection rules for MDE                           |
 | Get-XdrEndpointConfigurationIntuneConnection                | Retrieve Intune connection configuration                      |
 | Get-XdrEndpointConfigurationLiveResponse                    | Get Live Response configuration settings                      |
 | Get-XdrEndpointConfigurationPotentiallyUnwantedApplications | Retrieve PUA configuration                                    |
@@ -71,8 +72,12 @@ Get-XdrTenantContext -Force
 | Get-XdrEndpointDeviceTotals                                 | Get total counts of endpoint devices                          |
 | Get-XdrEndpointDeviceVendor                                 | Retrieve device vendor information                            |
 | Get-XdrEndpointDeviceWindowsReleaseVersion                  | Get Windows release version information                       |
+| Get-XdrIdentityAlertThreshold                               | Get alert threshold configuration for Defender for Identity   |
+| Get-XdrIdentityConfigurationDirectoryServiceAccount         | Retrieve directory service account configuration              |
+| Get-XdrIdentityConfigurationRemediationActionAccount        | Get remediation action account configuration                  |
 | Get-XdrIdentityDomainControllerCoverage                     | Retrieve domain controller coverage information               |
 | Get-XdrIdentityIdentity                                     | Get identities from Microsoft Defender for Identity           |
+| Get-XdrIdentityOnboardingStatus                             | Get onboarding status for Defender for Identity               |
 | Get-XdrIdentityServiceAccount                               | Retrieve service account information                          |
 | Get-XdrIdentityStatistic                                    | Get identity statistics                                       |
 | Get-XdrServiceInfo                                          | Retrieve XDR service information                              |
@@ -91,8 +96,13 @@ Get-XdrTenantContext -Force
 | Invoke-XdrHuntingQueryValidation                            | Validate an Advanced Hunting query for custom detection rules |
 | Invoke-XdrRestMethod                                        | Invoke REST API calls to XDR endpoints                        |
 | Invoke-XdrXspmHuntingQuery                                  | Execute hunting queries against XSPM attack surface API       |
+| New-XdrEndpointConfigurationCustomCollectionRule            | Create custom collection rules from YAML files                |
+| New-XdrIdentityConfigurationRemediationActionAccount        | Create new remediation action account configuration           |
+| Remove-XdrIdentityConfigurationRemediationActionAccount     | Remove remediation action account configuration               |
 | Set-XdrConnectionSettings                                   | Configure connection settings for XDR                         |
 | Set-XdrEndpointAdvancedFeatures                             | Set endpoint advanced features configuration                  |
+| Set-XdrEndpointConfigurationCustomCollectionRule            | Update existing custom collection rules                       |
+| Set-XdrIdentityConfigurationRemediationActionAccount        | Update remediation action account configuration               |
 | Update-XdrConnectionSettings                                | Update and refresh connection settings                        |
 
 ## Installation
@@ -119,6 +129,23 @@ Get-XdrEndpointDevice -PageSize 50
 
 # Get all identities with automatic pagination
 Get-XdrIdentityIdentity -All
+
+# Get custom collection rules
+Get-XdrEndpointConfigurationCustomCollectionRule
+
+# Export custom collection rules to YAML
+Get-XdrEndpointConfigurationCustomCollectionRule -Output YAML | Out-File "rules.yaml"
+
+# Create a new custom collection rule from YAML
+New-XdrEndpointConfigurationCustomCollectionRule -FilePath "C:\Rules\FileMonitoring.yaml"
+
+# Update an existing rule from YAML
+Set-XdrEndpointConfigurationCustomCollectionRule -FilePath "C:\Rules\UpdatedRule.yaml" -RuleId "guid"
+
+# Update a rule using PSObject
+$rule = Get-XdrEndpointConfigurationCustomCollectionRule | Where-Object { $_.ruleName -eq "My Rule" }
+$rule.isEnabled = $false
+Set-XdrEndpointConfigurationCustomCollectionRule -InputObject $rule
 
 # Get attack paths from XSPM
 Get-XdrXspmAttackPath -Top 50
