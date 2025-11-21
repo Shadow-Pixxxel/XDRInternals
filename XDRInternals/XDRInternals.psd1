@@ -77,6 +77,7 @@
         "Get-XdrEndpointAdvancedFeatures",
         "Get-XdrEndpointConfigurationAdvancedFeatures",
         "Get-XdrEndpointConfigurationAuthenticatedTelemetry",
+        "Get-XdrEndpointConfigurationCustomCollectionRule",
         "Get-XdrEndpointConfigurationIntuneConnection",
         "Get-XdrEndpointConfigurationLiveResponse",
         "Get-XdrEndpointConfigurationPotentiallyUnwantedApplications",
@@ -93,8 +94,12 @@
         "Get-XdrEndpointDeviceVendor",
         "Get-XdrEndpointDeviceWindowsReleaseVersion",
         "Get-XdrEndpointLicenseReport"
+        "Get-XdrIdentityAlertThreshold",
+        "Get-XdrIdentityConfigurationDirectoryServiceAccount",
+        "Get-XdrIdentityConfigurationRemediationActionAccount",
         "Get-XdrIdentityDomainControllerCoverage",
         "Get-XdrIdentityIdentity",
+        "Get-XdrIdentityOnboardingStatus",
         "Get-XdrIdentityServiceAccount",
         "Get-XdrIdentityStatistic",
         "Get-XdrServiceInfo",
@@ -114,8 +119,13 @@
         "Invoke-XdrHuntingQueryValidation",
         "Invoke-XdrRestMethod",
         "Invoke-XdrXspmHuntingQuery",
+        "New-XdrIdentityConfigurationRemediationActionAccount",
+        "Remove-XdrIdentityConfigurationRemediationActionAccount",
         "Set-XdrConnectionSettings",
         "Set-XdrEndpointAdvancedFeatures",
+        "Set-XdrIdentityConfigurationRemediationActionAccount",
+        "New-XdrEndpointConfigurationCustomCollectionRule",
+        "Set-XdrEndpointConfigurationCustomCollectionRule",
         "Update-XdrConnectionSettings"
     )
 
@@ -177,4 +187,3 @@
     # DefaultCommandPrefix = ''
 
 }
-

@@ -22,6 +22,7 @@
         Object
         Returns the API response.
     #>
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseSingularNouns', '', Justification = 'Custom Data Collection Rules is plural by design')]
     [CmdletBinding()]
     param (
         [Parameter()]
