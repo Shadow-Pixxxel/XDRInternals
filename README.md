@@ -63,6 +63,7 @@ Get-XdrTenantContext -Force
 | Get-XdrEndpointConfigurationPotentiallyUnwantedApplications | Retrieve PUA configuration                                    |
 | Get-XdrEndpointConfigurationPreviewFeature                  | Get preview feature configuration                             |
 | Get-XdrEndpointConfigurationPurviewSharing                  | Retrieve Purview data sharing configuration                   |
+| Get-XdrEndpointCustomDataCollectionRules                    | Get custom data collection rules                              |
 | Get-XdrEndpointDevice                                       | Get endpoint devices with filtering and pagination            |
 | Get-XdrEndpointDeviceModel                                  | Retrieve device models                                        |
 | Get-XdrEndpointDeviceOsVersionFriendlyName                  | Get friendly names for OS versions                            |
@@ -72,6 +73,7 @@ Get-XdrTenantContext -Force
 | Get-XdrEndpointDeviceTotals                                 | Get total counts of endpoint devices                          |
 | Get-XdrEndpointDeviceVendor                                 | Retrieve device vendor information                            |
 | Get-XdrEndpointDeviceWindowsReleaseVersion                  | Get Windows release version information                       |
+| Get-XdrEndpointLicenseReport                                | Retrieve endpoint license report                              |
 | Get-XdrIdentityAlertThreshold                               | Get alert threshold configuration for Defender for Identity   |
 | Get-XdrIdentityConfigurationDirectoryServiceAccount         | Retrieve directory service account configuration              |
 | Get-XdrIdentityConfigurationRemediationActionAccount        | Get remediation action account configuration                  |
@@ -86,7 +88,6 @@ Get-XdrTenantContext -Force
 | Get-XdrTenantContext                                        | Retrieve tenant context information                           |
 | Get-XdrTenants                                              | Retrieve list of accessible tenants                           |
 | Get-XdrTenantWorkloadStatus                                 | Get workload status for the tenant                            |
-| Get-XdrToken                                                | Retrieve authentication token information                     |
 | Get-XdrUnifiedPortalIsOnboarded                             | Check if unified portal is onboarded                          |
 | Get-XdrUnifiedPortalOnboardedWorkspace                      | Get onboarded workspace information                           |
 | Get-XdrXspmAttackPath                                       | Retrieve attack path data from XSPM                           |
