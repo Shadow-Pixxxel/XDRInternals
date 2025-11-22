@@ -93,7 +93,7 @@
         "Get-XdrEndpointDeviceTotals",
         "Get-XdrEndpointDeviceVendor",
         "Get-XdrEndpointDeviceWindowsReleaseVersion",
-        "Get-XdrEndpointLicenseReport"
+        "Get-XdrEndpointLicenseReport",
         "Get-XdrIdentityAlertThreshold",
         "Get-XdrIdentityConfigurationDirectoryServiceAccount",
         "Get-XdrIdentityConfigurationRemediationActionAccount",
@@ -108,7 +108,6 @@
         "Get-XdrTenantContext",
         "Get-XdrTenants",
         "Get-XdrTenantWorkloadStatus",
-        "Get-XdrToken",
         "Get-XdrUnifiedPortalIsOnboarded",
         "Get-XdrUnifiedPortalOnboardedWorkspace",
         "Get-XdrConfigurationUnifiedRBACWorkload",
