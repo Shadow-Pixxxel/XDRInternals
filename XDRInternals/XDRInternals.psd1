@@ -83,7 +83,6 @@
         "Get-XdrEndpointConfigurationPotentiallyUnwantedApplications",
         "Get-XdrEndpointConfigurationPreviewFeature",
         "Get-XdrEndpointConfigurationPurviewSharing",
-        "Get-XdrEndpointCustomDataCollectionRules",
         "Get-XdrEndpointDevice",
         "Get-XdrEndpointDeviceModel",
         "Get-XdrEndpointDeviceOsVersionFriendlyName",
