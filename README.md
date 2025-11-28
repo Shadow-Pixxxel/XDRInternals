@@ -87,6 +87,7 @@ Get-XdrTenantContext -Force
 | Get-XdrIdentityServiceAccount                               | Retrieve service account information                          |
 | Get-XdrIdentityStatistic                                    | Get identity statistics                                       |
 | Get-XdrIncident                                             | Retrieve incidents with filtering and pagination              |
+| Get-XdrIncidentAssociatedAlert                              | Retrieve alerts associated with a specific incident           |
 | Get-XdrServiceInfo                                          | Retrieve XDR service information                              |
 | Get-XdrStreamingApiConfiguration                            | Get Streaming API configuration                               |
 | Get-XdrSuppressionRule                                      | Retrieve alert suppression rules                              |
@@ -117,6 +118,18 @@ Get-XdrTenantContext -Force
 
 ## Installation
 
+### From the PowerShell Gallery
+
+```powershell
+# Install the module from the PowerShell Gallery
+Install-Module XDRInternals
+
+# Import the module
+Import-Module XDRInternals
+```
+
+### From GitHub
+
 ```powershell
 # Clone the repository
 git clone https://github.com/MSCloudInternals/XDRInternals.git
@@ -127,12 +140,29 @@ Import-Module .\XDRInternals\XDRInternals.psd1
 
 ## Usage
 
-```powershell
-# Connect to Microsoft Defender XDR
-Connect-XdrByEstsCookie
+### Connect to Microsoft Defender XDR
 
+```powershell
+# Connect to Microsoft Defender XDR using ESTSAUTH cookie
+Connect-XdrByEstsCookie
+```
+
+```powershell
+# Configure connection settings with manually acquired SCC auth and XSRF token
+Set-XdrConnectionSettings -SccAuth $scc -Xsrf $xsrf -Verbose
+```
+
+### Examples
+
+```powershell
 # Get tenant context
 Get-XdrTenantContext
+
+# Retrieve incidents
+Get-XdrIncident -Status Active
+
+# Get alerts associated with an incident
+Get-XdrIncidentAssociatedAlert -IncidentId 12345
 
 # Retrieve endpoint devices
 Get-XdrEndpointDevice -PageSize 50
