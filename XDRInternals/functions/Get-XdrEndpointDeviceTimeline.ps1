@@ -64,6 +64,7 @@
         "2bec169acc9def3ebd0bf8cdcbd9d16eb37e50e2" | Get-XdrEndpointDeviceTimeline
         Retrieves timeline events using pipeline input.
     #>
+    [OutputType([System.Object[]])]
     [CmdletBinding(DefaultParameterSetName = 'ByDeviceId')]
     param (
         [Parameter(Mandatory, ValueFromPipeline, ValueFromPipelineByPropertyName, ParameterSetName = 'ByDeviceId')]
