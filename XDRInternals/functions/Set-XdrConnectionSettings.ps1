@@ -32,14 +32,38 @@
     [CmdletBinding()]
     param (
         [Parameter(Mandatory, ParameterSetName = 'Manual')]
-        [string]$SccAuth,
+        $SccAuth,
 
         [Parameter(Mandatory, ParameterSetName = 'Manual')]
-        [string]$Xsrf,
+        $Xsrf,
 
         [Parameter(Mandatory, ParameterSetName = 'Websession')]
         [Microsoft.PowerShell.Commands.WebRequestSession]$WebSession
     )
+
+    # Convert secure strings to plain text
+    if ($SccAuth -is [System.Security.SecureString]) {
+        Write-Verbose "SccAuth is secure string, converting to plain text"
+        $ssPtr = [System.Runtime.InteropServices.Marshal]::SecureStringToBSTR($SccAuth)
+        try {
+            $SccAuthValue = [System.Runtime.InteropServices.Marshal]::PtrToStringBSTR($ssPtr)
+        } finally {
+            [System.Runtime.InteropServices.Marshal]::ZeroFreeBSTR($ssPtr)
+        }
+    } else {
+        $SccAuthValue = $SccAuth
+    }
+    if ($Xsrf -is [System.Security.SecureString]) {
+        Write-Verbose "Xsrf is secure string, converting to plain text"
+        $ssPtr = [System.Runtime.InteropServices.Marshal]::SecureStringToBSTR($Xsrf)
+        try {
+            $XsrfValue = [System.Runtime.InteropServices.Marshal]::PtrToStringBSTR($ssPtr)
+        } finally {
+            [System.Runtime.InteropServices.Marshal]::ZeroFreeBSTR($ssPtr)
+        }
+    } else {
+        $XsrfValue = $Xsrf
+    }
     
     Write-Verbose "Setting session cookies for XDR webpage requests"
     if ($PSBoundParameters.ContainsKey('WebSession')) {
@@ -48,8 +72,8 @@
     } else {
         # Create session and cookies
         $script:session = New-Object Microsoft.PowerShell.Commands.WebRequestSession
-        $script:session.Cookies.Add((New-Object System.Net.Cookie("sccauth", $SccAuth, "/", "security.microsoft.com")))
-        $script:session.Cookies.Add((New-Object System.Net.Cookie("XSRF-TOKEN", $Xsrf, "/", "security.microsoft.com")))
+        $script:session.Cookies.Add((New-Object System.Net.Cookie("sccauth", $SccAuthValue, "/", "security.microsoft.com")))
+        $script:session.Cookies.Add((New-Object System.Net.Cookie("XSRF-TOKEN", $XsrfValue, "/", "security.microsoft.com")))
     }
 
     # Set the headers to include the xsrf token
