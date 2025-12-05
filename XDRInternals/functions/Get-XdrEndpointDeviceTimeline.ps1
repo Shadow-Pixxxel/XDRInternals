@@ -12,6 +12,9 @@
     .PARAMETER MachineDnsName
         The DNS name of the machine. Use this parameter set when identifying the device by DNS name.
 
+    .PARAMETER MarkedEventsOnly
+        Only return events that have been marked in the timeline.
+
     .PARAMETER SenseClientVersion
         Optional. The version of the Sense client.
 
@@ -29,6 +32,9 @@
 
     .PARAMETER ToDate
         The end date for the timeline. Defaults to current time.
+
+    .PARAMETER LastNDays
+        Specifies the number of days to look back. Overrides FromDate and ToDate if specified.
 
     .PARAMETER DoNotUseCache
         Whether to bypass the cache. Defaults to $false.
@@ -58,6 +64,7 @@
         "2bec169acc9def3ebd0bf8cdcbd9d16eb37e50e2" | Get-XdrEndpointDeviceTimeline
         Retrieves timeline events using pipeline input.
     #>
+    [OutputType([System.Object[]])]
     [CmdletBinding(DefaultParameterSetName = 'ByDeviceId')]
     param (
         [Parameter(Mandatory, ValueFromPipeline, ValueFromPipelineByPropertyName, ParameterSetName = 'ByDeviceId')]
@@ -66,6 +73,10 @@
 
         [Parameter(Mandatory, ParameterSetName = 'ByMachineDnsName')]
         [string]$MachineDnsName,
+
+        [Parameter(ParameterSetName = 'ByDeviceId')]
+        [Parameter(ParameterSetName = 'ByMachineDnsName')]
+        [switch]$MarkedEventsOnly,
 
         [Parameter(ParameterSetName = 'ByDeviceId')]
         [Parameter(ParameterSetName = 'ByMachineDnsName')]
@@ -93,6 +104,10 @@
 
         [Parameter(ParameterSetName = 'ByDeviceId')]
         [Parameter(ParameterSetName = 'ByMachineDnsName')]
+        [int]$LastNDays,
+
+        [Parameter(ParameterSetName = 'ByDeviceId')]
+        [Parameter(ParameterSetName = 'ByMachineDnsName')]
         [bool]$DoNotUseCache = $false,
 
         [Parameter(ParameterSetName = 'ByDeviceId')]
@@ -113,6 +128,15 @@
     }
 
     process {
+        if ($PSBoundParameters.ContainsKey('LastNDays')) {
+            $ToDate = Get-Date
+            $FromDate = $ToDate.AddDays(-$LastNDays)
+        }
+
+        if (($ToDate - $FromDate).TotalDays -gt 30) {
+            throw "The time range between FromDate and ToDate cannot exceed 30 days."
+        }
+
         # Generate a new correlation ID
         $correlationId = [guid]::NewGuid().ToString()
 
@@ -138,6 +162,10 @@
             $queryParams = @("SenseClientVersion=$([System.Uri]::EscapeDataString($SenseClientVersion))") + $queryParams
         }
 
+        if ($MarkedEventsOnly) {
+            $queryParams = @("markedEventsOnly=true") + $queryParams
+        }
+
         # Determine the device identifier to use in the URI
         $deviceIdentifier = if ($PSCmdlet.ParameterSetName -eq 'ByDeviceId') { $DeviceId } else { (Get-XdrEndpointDevice -MachineSearchPrefix $MachineDnsName).MachineId }
 
@@ -145,7 +173,14 @@
             $Uri = "https://security.microsoft.com/apiproxy/mtp/mdeTimelineExperience/machines/$deviceIdentifier/events/?$($queryParams -join '&')"
 
             Write-Verbose "Retrieving XDR Endpoint device timeline for device $deviceIdentifier (From: $FromDate, To: $ToDate, CorrelationId: $correlationId)"
-            Invoke-RestMethod -Uri $Uri -ContentType "application/json" -WebSession $script:session -Headers $script:headers
+            $response = Invoke-RestMethod -Uri $Uri -ContentType "application/json" -WebSession $script:session -Headers $script:headers
+
+            if ($response -and $response.Items) {
+                return $response.Items
+            } else {
+                Write-Verbose "No timeline events found for device $deviceIdentifier."
+                return @()
+            }
         } catch {
             Write-Error "Failed to retrieve endpoint device timeline: $_"
         }
