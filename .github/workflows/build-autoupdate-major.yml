@@ -1,7 +1,6 @@
-﻿on:
-  push:
-    branches:
-      - main
+﻿name: Build and Auto-Update Major Version
+on:
+  workflow_dispatch:
 
 jobs:
   build:
@@ -16,7 +15,7 @@ jobs:
         run: ./build/vsts-validate.ps1
         shell: powershell
       - name: Build
-        run: ./build/vsts-build.ps1 -ApiKey $env:APIKEY -AutoVersion -SkipPublish
+        run: ./build/vsts-build.ps1 -ApiKey $env:APIKEY -AutoMajorVersion
         shell: powershell
         env:
-          APIKEY: ${{ secrets.ApiKey }}
+          APIKEY: ${{ secrets.APIKEY }}
